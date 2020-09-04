@@ -1,2 +1,3 @@
-# code-tapas
+# code-relections
+
 Daily reflections on code
