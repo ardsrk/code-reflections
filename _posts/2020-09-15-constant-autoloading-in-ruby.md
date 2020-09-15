@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Constant Autoloading in Ruby"
-date:   2020-09-11 16:00:00 +0530
+date:   2020-09-15 16:00:00 +0530
 ---
 
 Let's start by defining a constant in a file.
