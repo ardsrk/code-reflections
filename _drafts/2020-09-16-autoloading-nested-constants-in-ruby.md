@@ -24,7 +24,7 @@ Let's look at an example to understand nested constants.
 {% highlight ruby %}
 
 # File: ./march.rb
-MARCH = "March"
+MAY = "May"
 
 # File: ./a.rb
 class A
@@ -34,17 +34,28 @@ end
 # File: ./a/b.rb
 class A
   module B
-    MAY = "May"
+    MARCH = "March"
+  end
+end
+
+{% endhighlight %}
+
+MARCH is defined inside module A::B, APRIL is defined inside class A, and MAY is at the top-level. Now let's define a singleton method `x` in
+module A::B in the _main.rb_ file.
+
+{% highlight ruby %}
+
+# File: ./main.rb
+class A
+  module B
     def self.x
-      p Module.nesting       # [A::B, A]
       p [MARCH, APRIL, MAY]  # uninitialized constant A::B::MARCH (NameError)
     end
   end
 end
 
-A::B.x     
+puts A::B.x
 
 {% endhighlight %}
 
-Executing _ruby a/b.rb_ results in NameError. Let's fix this by autoloading MARCH and APRIL in the const_missing method.
-
+Executing the singleton method results in NameError. Let's override `Module.const_missing` method for autoloading the module A::B from a/b.rb
