@@ -59,3 +59,43 @@ puts A::B.x
 {% endhighlight %}
 
 Executing the singleton method results in NameError. Let's override `Module.const_missing` method for autoloading the module A::B from a/b.rb
+
+But before overloading the const_missing method, we will define a method named [underscore][underscore_link] that will convert module names (A::B) to path names (a/b).
+
+{% highlight ruby %}
+
+# File: ./main.rb
+class Module
+  def underscore
+    return name unless /[A-Z-]|::/.match?(name)
+    word = name.to_s.gsub("::".freeze, "/".freeze)
+    word.downcase
+  end
+end
+
+{% endhighlight %}
+
+[underscore_link]: https://github.com/rails/rails/blob/5-2-stable/activesupport/lib/active_support/inflector/methods.rb#L92
+
+Here is the definition of const_missing method.
+
+{% highlight ruby %}
+
+# File: ./main.rb
+class Module
+  def const_missing(const_name)
+    file_path = File.join(ROOT, self.underscore)
+
+    if File.file?(file_path + ".rb")
+      require file_path
+    end
+
+    unless self.const_defined?(const_name)
+      raise NameError.new("uninitialized constant #{self.name}::#{const_name}")
+    end
+
+    self.const_get(const_name)
+  end
+end
+
+{% endhighlight %}
