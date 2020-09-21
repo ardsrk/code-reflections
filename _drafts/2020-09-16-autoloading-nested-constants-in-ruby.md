@@ -4,7 +4,7 @@ title:  "Autoloading Nested Constants in Ruby"
 date:   2020-09-16 11:00:00 +0530
 ---
 
-The [previous post](/blog/2020/09/constant-autoloading-in-ruby/) explained how top-level constants can be autloaded in Ruby. All constants defined at the top-level are nested inside
+The [previous post](/blog/2020/09/constant-autoloading-in-ruby/) explained how top-level constants can be auto loaded in Ruby. All constants defined at the top-level are nested inside
 _Object_ namespace. Here is an example.
 
 {% highlight ruby %}
@@ -54,11 +54,11 @@ class A
   end
 end
 
-puts A::B.x
+A::B.x
 
 {% endhighlight %}
 
-Executing the singleton method results in NameError. Let's override `Module.const_missing` method for autoloading the module A::B from a/b.rb
+Executing the singleton method results in NameError. Let's override `Module.const_missing` method for auto loading the module A::B from a/b.rb
 
 But before overloading the const_missing method, we will define a method named [underscore][underscore_link] that will convert module names (A::B) to file paths (a/b).
 
@@ -158,6 +158,76 @@ end
 {% endhighlight %}
 
 On line 14 the call is `A.const_missing(APRIL)`. This leads to loading of the file _a.rb_ and the constant APRIL will be located inside the class A.
+We still have to load one last constant.
+
+Here is the full _main.rb_ file including changes to const_missing for loading MAY.
+
+
+{% highlight ruby linenos %}
+
+# File: ./main.rb
+
+ROOT = ENV['PWD']
+
+class Module
+  def underscore
+    return name unless /[A-Z-]|::/.match?(name)
+    word = name.to_s.gsub("::".freeze, "/".freeze)
+    word.downcase
+  end
+
+  def parent_name
+    name =~ /::[^:]+\Z/ ? $`.freeze : nil
+  end
+
+  def parent
+    enclosing_name = parent_name
+    if enclosing_name
+      Object.const_get(enclosing_name)
+    end
+  end
+
+  def const_missing(const_name)
+    if self != Object
+      file_path = File.join(ROOT, self.underscore)
+    else
+      file_path = File.join(ROOT, const_name.downcase.to_s)
+    end
+
+    if File.file?(file_path + ".rb")
+      require file_path
+    end
+
+    if self.const_defined?(const_name)
+      self.const_get(const_name)
+    elsif parent
+      parent.const_missing(const_name)
+    else
+      Object.const_missing(const_name)
+    end
+  end
+end
+
+class A
+  module B
+    def self.x
+      p [MARCH, APRIL, MAY]
+    end
+  end
+end
+
+A::B.x
+
+{% endhighlight %}
+
+Line 39 has been changed to call const_missing on Object when we have finished loading all files of enclosing constants. An `if` statement has been
+added in the beginning of const_missing method to load the file having the same name as the missing constant if there are no enclosing constants.
+
+## Reflections
+
+* What is $`? How is it useful in the context of matching strings using regular expressions?
+* What happens if you tried to load a constant that is not defined ( like JUNE )?
+* Would constants still get auto loaded if you redefined const_missing in Object instead of in Module?
 
 [underscore_link]: https://github.com/rails/rails/blob/5-2-stable/activesupport/lib/active_support/inflector/methods.rb#L92
 [parent_link]: https://github.com/rails/rails/blob/5-2-stable/activesupport/lib/active_support/core_ext/module/introspection.rb#L34
