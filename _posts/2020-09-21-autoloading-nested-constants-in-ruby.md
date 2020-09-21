@@ -23,7 +23,7 @@ Let's look at an example to understand nested constants.
 
 {% highlight ruby %}
 
-# File: ./march.rb
+# File: ./may.rb
 MAY = "May"
 
 # File: ./a.rb
