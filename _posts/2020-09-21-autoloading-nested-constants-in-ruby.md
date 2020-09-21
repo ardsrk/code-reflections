@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Autoloading Nested Constants in Ruby"
-date:   2020-09-16 11:00:00 +0530
+date:   2020-09-21 21:00:00 +0530
 ---
 
 The [previous post](/blog/2020/09/constant-autoloading-in-ruby/) explained how top-level constants can be auto loaded in Ruby. All constants defined at the top-level are nested inside
